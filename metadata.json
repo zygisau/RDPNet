@@ -1,0 +1,21 @@
+{
+  "train_paths": [
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/train/A",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/train/B",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/train/OUT"
+  ],
+  "valid_paths": [
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/val/A",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/val/B",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/val/OUT"
+  ],
+  "test_paths": [
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/test/A",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/test/B",
+    "/Users/zygimantas/Documents/Dataset/ChangeDetectionDataset/Real/subset/test/OUT"
+  ],
+  "filelist_name": "filelist.txt",
+  "num_class": 2,
+  "cuda": false,
+  "epochs": 1
+}

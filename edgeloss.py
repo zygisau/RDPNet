@@ -12,8 +12,8 @@ class EdgeLoss:
         num = 0
         ksize = self.MASK
         MASK = self.MASK
-        for x in range(0, ksize):
-            for y in range(0, ksize):
+        for x in range(0, len(ksize[0])):
+            for y in range(0, len(ksize[1])):
                 if (x + 0.5 - ksize / 2) ** 2 + (y + 0.5 - ksize / 2) ** 2 <= (
                     (ksize - 1) / 2
                 ) ** 2:
@@ -36,7 +36,7 @@ class EdgeLoss:
         eroded = torch.sum(patches.reshape(B, C, H, W, -1).float() * self.MASK, dim=-1)
         return eroded
 
-    def edgeLoss(self, input, target):
+    def __call__(self, input, target):
         targets = target.unsqueeze(dim=1)
         targetAve = self.tensor_average(targets, ksize=self.KSIZE)
         at = torch.abs(targets.float() - targetAve)
