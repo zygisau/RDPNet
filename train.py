@@ -43,14 +43,14 @@ test_files = [os.path.join(path, opt.filelist_name) for path in test_paths]
 training_data = CDDLoader(train_files, train_paths, transform=train_transforms)
 valid_data = CDDLoader(valid_files, valid_paths, transform=test_transforms)
 test_data = CDDLoader(test_files, test_paths, transform=test_transforms)
-train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
-valid_dataloader = DataLoader(valid_data, batch_size=64, shuffle=True)
-test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+train_dataloader = DataLoader(training_data, batch_size=24, shuffle=True)
+valid_dataloader = DataLoader(valid_data, batch_size=24, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=24, shuffle=True)
 
 net = RDPNet(in_ch=3, out_ch=1).to(device)
 # net.load_state_dict(torch.load("RDPNet_CDD.pth"))
 
-criterion1 = EdgeLoss(1)
+criterion1 = EdgeLoss(1, device)
 criterion2 = FocalLoss(gamma=0, alpha=None)
 optimizer = optim.Adam(net.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.StepLR(optimizer, 15, 0.8)

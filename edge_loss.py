@@ -4,19 +4,19 @@ import torch.nn.functional as F
 
 
 class EdgeLoss(nn.Module):
-    def __init__(self, alpha):
+    def __init__(self, alpha, device):
         super(EdgeLoss, self).__init__()
         self.alpha = alpha
         self.center_kernel = torch.FloatTensor([[[
             [0, 0, 0],
             [0, 1, 0],
             [0, 0, 0],
-        ]]])
+        ]]]).to(device)
         self.region_kernel = torch.FloatTensor([[[
             [1, 1, 1],
             [1, 0, 1],
             [1, 1, 1],
-        ]]])
+        ]]]).to(device)
         self.center_kernel2d = torch.FloatTensor([[[
             [0, 0, 0],
             [0, 1, 0],
@@ -25,7 +25,7 @@ class EdgeLoss(nn.Module):
             [0, 0, 0],
             [0, 1, 0],
             [0, 0, 0],
-        ]]])
+        ]]]).to(device)
         self.region_kernel2d = torch.FloatTensor([[[
             [1, 1, 1],
             [1, 0, 1],
@@ -34,7 +34,7 @@ class EdgeLoss(nn.Module):
             [1, 1, 1],
             [1, 0, 1],
             [1, 1, 1],
-        ]]])
+        ]]]).to(device)
         self.__NUMBER_OF_NEIGHBOURS = 8
 
     def forward(self, outputs, labels):
