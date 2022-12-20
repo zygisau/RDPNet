@@ -142,16 +142,19 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
         writer.add_scalar("F1/valid", F1, epoch)
         print(f"Epoch validation: {epoch}; mIoU: {mIoU}; Precision: {Precision}; Recall: {Recall}; F1: {F1}")
 
-    """
-        Store the weights of good epochs based on validation results
-    """
-    if ((Precision > best_metrics['Precision'])
-            or
-            (Recall > best_metrics['Recall'])
-            or
-            (F1 > best_metrics['F1'])):
-        print("Saving new best model...")
-        torch.save(net.state_dict(), os.path.join('.', models_path, 'checkpoint_cd_epoch_' + str(epoch) + '.pt'))
+        """
+            Store the weights of good epochs based on validation results
+        """
+        if ((Precision > best_metrics['Precision'])
+                or
+                (Recall > best_metrics['Recall'])
+                or
+                (F1 > best_metrics['F1'])):
+            print("Saving new best model...")
+            torch.save(net.state_dict(), os.path.join('.', models_path, 'checkpoint_cd_epoch_' + str(epoch) + '.pt'))
+            best_metrics['Precision'] = Precision
+            best_metrics['Recall'] = Recall
+            best_metrics['F1'] = F1
 
 print('Finished Training')
 
