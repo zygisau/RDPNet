@@ -38,7 +38,7 @@ class EdgeLoss(nn.Module):
         self.__NUMBER_OF_NEIGHBOURS = 8
 
     def forward(self, outputs, labels):
-        cut_outputs = F.conv2d(outputs, self.center_kernel)
+        cut_outputs = F.conv2d(outputs, self.center_kernel2d)
 
         center = F.conv2d(labels, self.center_kernel)
         region = F.conv2d(labels, self.region_kernel)

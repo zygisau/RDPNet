@@ -47,7 +47,7 @@ train_dataloader = DataLoader(training_data, batch_size=24, shuffle=True)
 valid_dataloader = DataLoader(valid_data, batch_size=24, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=24, shuffle=True)
 
-net = RDPNet(in_ch=3, out_ch=1).to(device)
+net = RDPNet(in_ch=3, out_ch=2).to(device)
 # net.load_state_dict(torch.load("RDPNet_CDD.pth"))
 
 criterion1 = EdgeLoss(1, device)
@@ -108,7 +108,6 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
     writer.add_scalar("Precision/train", Precision, epoch)
     writer.add_scalar("Recall/train", Recall, epoch)
     writer.add_scalar("F1/train", F1, epoch)
-    print(f"Epoch: {epoch}; mIoU: {mIoU}; Precision: {Precision}; Recall: {Recall}; F1: {F1}")
     scheduler.step()
 
     # ----------------------------------
@@ -125,7 +124,11 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
 
             # forward + backward + optimize
             outputs = net(*inputs)
-            loss = criterion1(outputs, labels)
+            loss_edge = criterion1(outputs, labels)
+            loss_focal = criterion2(outputs, labels)
+            loss_dice = dice_loss(outputs, labels)
+            loss = loss_edge + loss_focal + loss_dice
+
             writer.add_scalar("Loss/valid", loss, epoch)
             evaluator.add_batch(labels, outputs)
 
@@ -137,6 +140,7 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
         writer.add_scalar("Precision/valid", Precision, epoch)
         writer.add_scalar("Recall/valid", Recall, epoch)
         writer.add_scalar("F1/valid", F1, epoch)
+        print(f"Epoch validation: {epoch}; mIoU: {mIoU}; Precision: {Precision}; Recall: {Recall}; F1: {F1}")
 
     """
         Store the weights of good epochs based on validation results
