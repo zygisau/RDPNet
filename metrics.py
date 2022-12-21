@@ -97,3 +97,55 @@ class Evaluator(object):
         # self.confusion_matrix = np.zeros((self.num_class,) * 2)
         self.confusion_matrix = torch.zeros(self.num_class, self.num_class)
 
+
+def initialize_metrics():
+    """Generates a dictionary of metrics with metrics as keys
+       and empty lists as values
+
+    Returns
+    -------
+    dict
+        a dictionary of metrics
+
+    """
+    metrics = {
+        'cd_losses': [],
+        'cd_corrects': [],
+        'cd_precisions': [],
+        'cd_recalls': [],
+        'cd_f1scores': [],
+        'learning_rate': [],
+    }
+
+    return metrics
+
+
+def set_metrics(metric_dict, cd_loss, cd_corrects, cd_report, lr):
+    """Updates metric dict with batch metrics
+
+    Parameters
+    ----------
+    metric_dict : dict
+        dict of metrics
+    cd_loss : dict(?)
+        loss value
+    cd_corrects : dict(?)
+        number of correct results (to generate accuracy
+    cd_report : list
+        precision, recall, f1 values
+
+    Returns
+    -------
+    dict
+        dict of  updated metrics
+
+
+    """
+    metric_dict['cd_losses'].append(cd_loss)
+    metric_dict['cd_corrects'].append(cd_corrects.item())
+    metric_dict['cd_precisions'].append(cd_report[0])
+    metric_dict['cd_recalls'].append(cd_report[1])
+    metric_dict['cd_f1scores'].append(cd_report[2])
+    metric_dict['learning_rate'].append(lr)
+
+    return metric_dict

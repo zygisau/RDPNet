@@ -1,3 +1,4 @@
+import json
 import os
 
 import torch
@@ -7,15 +8,16 @@ from RDPNet import RDPNet
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from edge_loss import EdgeLoss
+from helpers import get_mean_metrics
 from loader import CDDLoader
 from tqdm import tqdm
+from sklearn.metrics import precision_recall_fscore_support as prfs
 
 from losses import FocalLoss, dice_loss
-from metrics import Evaluator
+from metrics import initialize_metrics, set_metrics
 from parser import get_parser_with_args
 from transforms import train_transforms, test_transforms
 from torch.utils.tensorboard import SummaryWriter
-
 
 models_path = 'tmp'
 isExist = os.path.exists(models_path)
@@ -54,14 +56,8 @@ criterion1 = EdgeLoss(1, device)
 criterion2 = FocalLoss(gamma=0, alpha=None)
 optimizer = optim.Adam(net.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.StepLR(optimizer, 15, 0.8)
-evaluator = Evaluator(opt.num_class, opt.cuda)
 
-best_metrics = {
-    "mIoU": -Inf,
-    "Precision": -Inf,
-    "Recall": -Inf,
-    "F1": -Inf
-}
+best_metrics = {'cd_f1scores': -1, 'cd_recalls': -1, 'cd_precisions': -1}
 
 for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
 
@@ -69,7 +65,9 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
     # -------------TRAINING-------------
     # ----------------------------------
     running_loss = 0.0
-    evaluator.reset()
+    train_metrics = initialize_metrics()
+    val_metrics = initialize_metrics()
+
     net.train()
     for i, data in enumerate(tqdm(train_dataloader, leave=False)):
         # get the inputs; data is a list of [inputs, labels]
@@ -97,23 +95,35 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
             running_loss = 0.0
 
         writer.add_scalar("Loss/train", loss, epoch)
-        evaluator.add_batch(labels, outputs)
 
-    mIoU = evaluator.Mean_Intersection_over_Union()
-    Precision = evaluator.Precision()
-    Recall = evaluator.Recall()
-    F1 = evaluator.F1()
+        _, cd_preds = torch.max(outputs, 1)
 
-    writer.add_scalar("mIoU/train", mIoU, epoch)
-    writer.add_scalar("Precision/train", Precision, epoch)
-    writer.add_scalar("Recall/train", Recall, epoch)
-    writer.add_scalar("F1/train", F1, epoch)
+        cd_corrects = (100 *
+                       (cd_preds.squeeze().byte() == labels.squeeze().byte()).sum() /
+                       (labels.size()[0] * (outputs.shape[-1] ** 2)))
+        cd_train_report = prfs(labels.data.cpu().numpy().flatten(),
+                               cd_preds.data.cpu().numpy().flatten(),
+                               average='binary',
+                               zero_division=0,
+                               pos_label=1)
+        train_metrics = set_metrics(train_metrics,
+                                    running_loss,
+                                    cd_corrects,
+                                    cd_train_report,
+                                    scheduler.get_last_lr())
+
+        # log the batch mean metrics
+        mean_train_metrics = get_mean_metrics(train_metrics)
+
+        for k, v in mean_train_metrics.items():
+            writer.add_scalars(str(k), {'train': v}, epoch)
+        break
+
     scheduler.step()
 
     # ----------------------------------
     # -----------VALIDATION-------------
     # ----------------------------------
-    evaluator.reset()
     net.eval()
     with torch.no_grad():
         for i, data in enumerate(tqdm(valid_dataloader, leave=False)):
@@ -130,31 +140,45 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
             loss = loss_edge + loss_focal + loss_dice
 
             writer.add_scalar("Loss/valid", loss, epoch)
-            evaluator.add_batch(labels, outputs)
 
-        mIoU = evaluator.Mean_Intersection_over_Union()
-        Precision = evaluator.Precision()
-        Recall = evaluator.Recall()
-        F1 = evaluator.F1()
-        writer.add_scalar("mIoU/valid", mIoU, epoch)
-        writer.add_scalar("Precision/valid", Precision, epoch)
-        writer.add_scalar("Recall/valid", Recall, epoch)
-        writer.add_scalar("F1/valid", F1, epoch)
-        print(f"Epoch validation: {epoch}; mIoU: {mIoU}; Precision: {Precision}; Recall: {Recall}; F1: {F1}")
+            _, cd_preds = torch.max(outputs, 1)
 
-        """
-            Store the weights of good epochs based on validation results
-        """
-        if ((Precision > best_metrics['Precision'])
+            cd_corrects = (100 *
+                           (cd_preds.squeeze().byte() == labels.squeeze().byte()).sum() /
+                           (labels.size()[0] * (outputs.shape[-1] ** 2)))
+            cd_val_report = prfs(labels.data.cpu().numpy().flatten(),
+                                 cd_preds.data.cpu().numpy().flatten(),
+                                 average='binary',
+                                 zero_division=0,
+                                 pos_label=1)
+            val_metrics = set_metrics(val_metrics,
+                                      running_loss,
+                                      cd_corrects,
+                                      cd_val_report,
+                                      scheduler.get_last_lr())
+
+            # log the batch mean metrics
+            mean_val_metrics = get_mean_metrics(val_metrics)
+
+            for k, v in mean_val_metrics.items():
+                writer.add_scalars(str(k), {'val': v}, epoch)
+
+            break
+        if ((mean_val_metrics['cd_precisions'] > best_metrics['cd_precisions'])
                 or
-                (Recall > best_metrics['Recall'])
+                (mean_val_metrics['cd_recalls'] > best_metrics['cd_recalls'])
                 or
-                (F1 > best_metrics['F1'])):
-            print("Saving new best model...")
+                (mean_val_metrics['cd_f1scores'] > best_metrics['cd_f1scores'])):
+            metadata['validation_metrics'] = mean_val_metrics
+            with open('./tmp/metadata_epoch_' + str(epoch) + '.json', 'w') as fout:
+                json.dump(metadata, fout)
+
             torch.save(net.state_dict(), os.path.join('.', models_path, 'checkpoint_cd_epoch_' + str(epoch) + '.pt'))
-            best_metrics['Precision'] = Precision
-            best_metrics['Recall'] = Recall
-            best_metrics['F1'] = F1
+            best_metrics = mean_val_metrics
+
+    if epoch % (opt.epochs / 4) == 0:
+        print("Printing model for safety")
+        torch.save(net.state_dict(), os.path.join('.', models_path, 'emergency_checkpoint_cd_epoch_' + str(epoch) + '.pt'))
 
 print('Finished Training')
 
