@@ -117,7 +117,6 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
 
         for k, v in mean_train_metrics.items():
             writer.add_scalars(str(k), {'train': v}, epoch)
-        break
 
     scheduler.step()
 
@@ -163,7 +162,6 @@ for epoch in tqdm(range(opt.epochs)):  # loop over the dataset multiple times
             for k, v in mean_val_metrics.items():
                 writer.add_scalars(str(k), {'val': v}, epoch)
 
-            break
         if ((mean_val_metrics['cd_precisions'] > best_metrics['cd_precisions'])
                 or
                 (mean_val_metrics['cd_recalls'] > best_metrics['cd_recalls'])
