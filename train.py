@@ -27,7 +27,7 @@ if not isExist:
 
 parser, metadata = get_parser_with_args()
 opt = parser.parse_args()
-writer = SummaryWriter('/runs_sobel')
+writer = SummaryWriter('./runs_sobel')
 
 device = 'cpu'
 if torch.cuda.is_available():
