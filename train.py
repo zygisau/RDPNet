@@ -16,17 +16,18 @@ from sklearn.metrics import precision_recall_fscore_support as prfs
 from losses import FocalLoss, dice_loss
 from metrics import initialize_metrics, set_metrics
 from parser import get_parser_with_args
+from sobel_loss import SobelLoss
 from transforms import train_transforms, test_transforms
 from torch.utils.tensorboard import SummaryWriter
 
-models_path = 'tmp'
+models_path = 'tmp_sobel'
 isExist = os.path.exists(models_path)
 if not isExist:
     os.makedirs(models_path)
 
 parser, metadata = get_parser_with_args()
 opt = parser.parse_args()
-writer = SummaryWriter()
+writer = SummaryWriter('/runs_sobel')
 
 device = 'cpu'
 if torch.cuda.is_available():
@@ -52,7 +53,8 @@ test_dataloader = DataLoader(test_data, batch_size=24, shuffle=True)
 net = RDPNet(in_ch=3, out_ch=2).to(device)
 # net.load_state_dict(torch.load("RDPNet_CDD.pth"))
 
-criterion1 = EdgeLoss(1, device)
+# criterion1 = EdgeLoss(1, device)
+criterion1 = SobelLoss(1, device)
 criterion2 = FocalLoss(gamma=0, alpha=None)
 optimizer = optim.Adam(net.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.StepLR(optimizer, 15, 0.8)
