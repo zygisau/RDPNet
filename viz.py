@@ -56,3 +56,7 @@ def main():
             cv2.imwrite(file_path + '.png', cd_preds)
 
             index_img += 1
+
+
+if __name__ == "__main__":
+    main()
