@@ -47,7 +47,6 @@ def main():
 
             cd_preds = net(batch_img1, batch_img2)
 
-            cd_preds = cd_preds[-1]
             _, cd_preds = torch.max(cd_preds, 1)
             cd_preds = cd_preds.data.cpu().numpy()
             cd_preds = cd_preds.squeeze() * 255
