@@ -52,7 +52,8 @@ def main():
             cd_preds = cd_preds.squeeze() * 255
 
             file_path = './output_img/' + str(index_img).zfill(5)
-            cv2.imwrite(file_path + '.png', cd_preds)
+            for i in range(cd_preds.shape[0]):
+                cv2.imwrite(file_path + '.png', cd_preds[i])
 
             index_img += 1
 
