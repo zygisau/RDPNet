@@ -17,5 +17,6 @@
   "filelist_name": "filelist.txt",
   "num_class": 2,
   "cuda": false,
-  "epochs": 1
+  "epochs": 1,
+  "model_path": "/Users/zygimantas/Documents/sources/RDPNet/tmp/checkpoint_cd_epoch_0.pt"
 }
