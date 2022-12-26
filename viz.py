@@ -29,7 +29,7 @@ test_paths = opt.test_paths
 test_files = [os.path.join(path, opt.filelist_name) for path in test_paths]
 
 test_data = CDDLoader(test_files, test_paths, transform=test_transforms)
-test_dataloader = DataLoader(test_data, batch_size=24, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=24, shuffle=False)
 
 def main():
     net = RDPNet(in_ch=3, out_ch=2).to(device)
