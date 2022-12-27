@@ -6,12 +6,13 @@ from PIL import Image
 
 
 class CDDLoader(Dataset):
-    def __init__(self, annotations_files, img_dirs, transform=None):
+    def __init__(self, annotations_files, img_dirs, transform=None, append_filename=False):
         self.img_a = pd.read_csv(annotations_files[0])
         self.img_b = pd.read_csv(annotations_files[1])
         self.img_OUT = pd.read_csv(annotations_files[2])
         self.img_dirs = img_dirs
         self.transform = transform
+        self.append_filename = append_filename
 
     def __len__(self):
         return len(self.img_a)
@@ -25,4 +26,7 @@ class CDDLoader(Dataset):
         image_out = Image.open(img_out_path).convert('1')
         if self.transform:
             image_a, image_b, image_out = self.transform((image_a, image_b, image_out))
-        return image_a, image_b, image_out
+
+        if not self.append_filename:
+            return image_a, image_b, image_out
+        return image_a, image_b, image_out, self.img_OUT.iloc[idx, 0]

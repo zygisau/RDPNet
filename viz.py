@@ -28,7 +28,7 @@ if torch.cuda.is_available():
 test_paths = opt.test_paths
 test_files = [os.path.join(path, opt.filelist_name) for path in test_paths]
 
-test_data = CDDLoader(test_files, test_paths, transform=test_transforms)
+test_data = CDDLoader(test_files, test_paths, transform=test_transforms, append_filename=True)
 test_dataloader = DataLoader(test_data, batch_size=24, shuffle=False)
 
 def main():
@@ -40,7 +40,7 @@ def main():
     test_metrics = initialize_metrics()
     with torch.no_grad():
         tbar = tqdm(test_dataloader)
-        for batch_img1, batch_img2, labels in tbar:
+        for batch_img1, batch_img2, labels, filenames in tbar:
             batch_img1 = batch_img1.float().to(device)
             batch_img2 = batch_img2.float().to(device)
             labels = labels.long().to(device)
@@ -51,8 +51,9 @@ def main():
             cd_preds = cd_preds.data.cpu().numpy()
             cd_preds = cd_preds.squeeze() * 255
 
-            file_path = './output_img/' + str(index_img).zfill(5)
+            file_path = './output_img/'
             for i in range(cd_preds.shape[0]):
+                file_name = filenames[i][:-4]
                 cv2.imwrite(file_path + '.png', cd_preds[i])
 
             index_img += 1
