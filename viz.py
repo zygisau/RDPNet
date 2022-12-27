@@ -54,7 +54,7 @@ def main():
             file_path = './output_img/'
             for i in range(cd_preds.shape[0]):
                 file_name = filenames[i][:-4]
-                cv2.imwrite(file_path + '.png', cd_preds[i])
+                cv2.imwrite(file_path + file_name + '.png', cd_preds[i])
 
             index_img += 1
 
